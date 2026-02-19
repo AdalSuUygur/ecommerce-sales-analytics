@@ -75,7 +75,7 @@ if secilen_sayfa == "Genel Bakış":
         x=monthly_sales.index, 
         y=monthly_sales.values, 
         labels={'x': 'Tarih', 'y': 'Toplam Ciro (₺)'},
-        color_discrete_sequence=['#636EFA'] # Hoş bir mavi tonu
+        color_discrete_sequence=['#2E7D32'] 
     )
     fig.update_layout(margin=dict(l=0, r=0, t=30, b=0)) # Boşlukları kırptık
     st.plotly_chart(fig, use_container_width=True)
