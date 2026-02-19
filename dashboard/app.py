@@ -11,8 +11,8 @@ sys.path.append(BASE_DIR)
 
 # Tüm fonksiyonları içeri aktarıyoruz
 from src.data_loader import load_data
-from src.analysis import calculate_kpis, get_monthly_sales, get_category_performance, get_top_products,calculate_rfm
-from src.recommender import get_recommendations, sim_df # Batuhan'ın importları eklendi
+from src.analysis import calculate_kpis, get_monthly_sales, get_category_performance, get_top_products,calculate_rfm,get_daily_sales_performance
+from src.recommender import get_recommendations, sim_df 
 
 # Sayfa Ayarları
 st.set_page_config(page_title="E-Ticaret Dashboard", layout="wide")
@@ -76,6 +76,24 @@ if secilen_sayfa == "Genel Bakış":
     )
     fig.update_layout(margin=dict(l=0, r=0, t=30, b=0)) # Boşlukları kırptık
     st.plotly_chart(fig, use_container_width=True)
+    st.markdown("---")
+    st.subheader("📅 Günlük Satış Performansı")
+    
+    daily_df = get_daily_sales_performance(df)
+    
+    fig_daily = px.bar(
+        daily_df, 
+        x='Gun_Adi', 
+        y='TotalAmount',
+        labels={'Gun_Adi': 'Gün', 'TotalAmount': 'Toplam Satış (₺)'},
+        color='TotalAmount',
+        color_continuous_scale='Viridis',
+        text_auto='.2s'
+    )
+    # Rakamları Türk usulü formatla (opsiyonel ama şık durur)
+    fig_daily.update_layout(xaxis_title="", yaxis_title="Ciro (₺)")
+    
+    st.plotly_chart(fig_daily, use_container_width=True)
 
 elif secilen_sayfa == "Kategori Analizi":
     st.title("📦 Kategori ve Ürün Performansı")

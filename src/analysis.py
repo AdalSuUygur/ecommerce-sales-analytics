@@ -55,6 +55,31 @@ def get_top_products(df, n=10):
     
     return prod_perf
 
+
+def get_daily_sales_performance(df):
+    """
+    Satışların haftanın günlerine göre dağılımını analiz eder.
+    """
+    temp_df = df.copy()
+    
+    # Gün isimlerini Türkçe olarak eşleyelim
+    gun_esleme = {
+        0: 'Pazartesi', 1: 'Salı', 2: 'Çarşamba', 
+        3: 'Perşembe', 4: 'Cuma', 5: 'Cumartesi', 6: 'Pazar'
+    }
+    
+    temp_df['Gun_Adi'] = temp_df['OrderDate'].dt.dayofweek.map(gun_esleme)
+    
+    # Günlük toplam ciroyu hesapla
+    daily_analysis = temp_df.groupby(['Gun_Adi'])['TotalAmount'].sum().reset_index()
+    
+    # Günleri mantıklı bir sıraya dizelim (Pazartesi'den başlayarak)
+    gun_sirasi = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+    daily_analysis['Gun_Adi'] = pd.Categorical(daily_analysis['Gun_Adi'], categories=gun_sirasi, ordered=True)
+    daily_analysis = daily_analysis.sort_values('Gun_Adi')
+    
+    return daily_analysis
+
 def calculate_rfm(df):
     """
     Müşteri Segmentasyonu (RFM Analizi) yapar.
