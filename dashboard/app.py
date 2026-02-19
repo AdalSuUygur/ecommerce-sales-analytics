@@ -144,18 +144,75 @@ elif secilen_sayfa == "Kategori Analizi":
     st.plotly_chart(fig_tree, use_container_width=True)
     
 elif secilen_sayfa == "Akıllı Öneri Motoru":
-    # Batuhan'ın kodları tamamen buraya taşındı
-    st.title("🚀 E-Ticaret Akıllı Öneri Motoru")
-    st.write("Müşterilerin sepet alışkanlıklarına göre ürün önerileri.")
+    st.title("🤖 Akıllı Öneri ve Sadakat Motoru")
+    
+    tab1, tab2 = st.tabs(["Ürün Bazlı Öneri", "Müşteriye Özel Fırsatlar"])
+    
+    with tab1:
+        st.subheader("🔍 Ürüne Göre Benzerlerini Bul")
+        
+        # Kullanıcının bir ürün seçmesini sağla
+        tum_urunler = df['ProductName'].unique()
+        secilen_urun = st.selectbox("Benzerlerini görmek istediğiniz ürünü seçin:", tum_urunler)
+        
+        if secilen_urun:
+            from src.recommender import get_recommendations
+            
+            # Algoritmayı çalıştır ve önerileri al
+            oneriler = get_recommendations(secilen_urun)
+            
+            if oneriler: # Liste boş değilse çalışır
+                st.write(f"**'{secilen_urun}'** ürününü beğenenler bunları da beğendi:")
+            
+            # Önerileri yan yana sütunlar halinde göster
+            # oneriler bir liste olduğu için direkt üzerinden dönebiliriz
+                cols = st.columns(len(oneriler))
+                for idx, urun_adi in enumerate(oneriler):
+                    with cols[idx]:
+                        st.info(f"📦 {urun_adi}")
+                        # Liste döndüğü için benzerlik skoru elimizde yoksa caption'ı kaldırabiliriz
+                        st.caption("Benzer Ürün")
+            else:
+                st.warning("Bu ürün için yeterli benzerlik verisi bulunamadı.")
+    
+    with tab2:
+        st.subheader("🎯 Müşteri Segmentine Göre Akıllı Teklif")
+        
+        # RFM verisini al
+        rfm_df = calculate_rfm(df)
+        
+        # Müşteri seçimi
+        selected_user = st.selectbox("Analiz Edilecek Müşteri ID:", rfm_df.index)
+        
+        user_info = rfm_df.loc[selected_user]
+        segment = user_info['Segment']
+        
+        # Segmentlere göre dinamik mesaj ve aksiyon
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Müşteri Segmenti", segment)
+            st.write(f"**Toplam Harcama:** {user_info['Monetary']:,.0f} ₺".replace(',', '.'))
+            
+        with col2:
+            if segment == 'Champions':
+                st.success("🌟 Bu bir VIP müşteridir. Yeni koleksiyonu öncelikli gösterin.")
+            elif segment == 'At Risk' or segment == 'Hibernating':
+                st.warning("⚠️ Bu müşteriyi kaybetmek üzereyiz! %20 indirim kuponu tanımlayın.")
+            else:
+                st.info("📈 Bu müşteri düzenli alım yapıyor, sepet büyütme odaklı ürünler önerin.")
 
-    urun_listesi = sim_df.columns.tolist()
-    secilen_urun = st.selectbox("Lütfen bir ürün seçin:", urun_listesi)
-
-    if st.button("Benzer Ürünleri Öner"):
-        st.success(f"**{secilen_urun}** alan müşterilerimizin ilgilendiği diğer ürünler:")
-        oneriler = get_recommendations(secilen_urun)
-        for i, urun in enumerate(oneriler, 1):
-            st.write(f"{i}. {urun}")
+        # O MÜŞTERİNİN EN ÇOK ALDIĞI KATEGORİDEN ÖNERİ YAPALIM
+        st.markdown("---")
+        st.subheader(f"🎁 {selected_user} İçin Kişiselleştirilmiş Öneriler")
+        
+        # Müşterinin en çok harcama yaptığı kategoriyi bulalım
+        user_top_cat = df[df['CustomerID'] == selected_user].groupby('CategoryName')['TotalAmount'].sum().idxmax()
+        
+        st.write(f"Bu müşteri en çok **{user_top_cat}** kategorisine ilgi duyuyor. İşte o kategoriden seçtiklerimiz:")
+        
+        cat_rec = df[df['CategoryName'] == user_top_cat]['ProductName'].unique()[:5]
+        for item in cat_rec:
+            st.write(f"✅ {item}")
 
 elif secilen_sayfa == "Müşteri Segmentasyonu":
     st.title("👥 Müşteri Segmentasyonu (RFM)")
