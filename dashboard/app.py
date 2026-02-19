@@ -25,7 +25,7 @@ df = fetch_data()
 
 # --- SOL MENÜ ---
 st.sidebar.title("Navigasyon 🧭")
-secilen_sayfa = st.sidebar.radio("Sayfa Seçin:", ["Genel Bakış", "Kategori Analizi", "Müşteri Segmentasyonu", "Akıllı Öneri Motoru"])
+secilen_sayfa = st.sidebar.radio("Sayfa Seçin:", ["Genel Bakış", "Kategori Analizi", "Bölgesel Analiz", "Müşteri Segmentasyonu", "Sepet Analizi", "Akıllı Öneri Motoru"])
 st.sidebar.markdown("---")
 st.sidebar.subheader("📅 Tarih Filtresi")
     
@@ -178,3 +178,58 @@ elif secilen_sayfa == "Müşteri Segmentasyonu":
     })
     champions_display['Toplam Harcama (₺)'] = champions_display['Toplam Harcama (₺)'].apply(lambda x: f"{x:,.0f}".replace(',', '.'))
     st.dataframe(champions_display, use_container_width=True, hide_index=True)
+    
+elif secilen_sayfa == "Bölgesel Analiz":
+    st.title("🌍 Bölgesel Satış Dağılımı")
+    
+    # Şehir bazlı satışları grupla
+    city_sales = df.groupby('City')['TotalAmount'].sum().reset_index()
+    city_sales = city_sales.sort_values(by='TotalAmount', ascending=False)
+    
+    # 1. En Çok Satış Yapılan Şehirler (Bar Chart)
+    st.subheader("Şehir Bazlı Ciro Sıralaması")
+    fig_city = px.bar(
+        city_sales.head(10), 
+        x='TotalAmount', 
+        y='City', 
+        orientation='h',
+        color='TotalAmount',
+        color_continuous_scale='Blues',
+        text_auto='.2s'
+    )
+    st.plotly_chart(fig_city, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # 2. Ülke Bazlı Dağılım (Pasta Grafik)
+    st.subheader("Ülkelere Göre Satış Payı")
+    country_sales = df.groupby('Country')['TotalAmount'].sum().reset_index()
+    fig_country = px.pie(country_sales, values='TotalAmount', names='Country', hole=0.4)
+    st.plotly_chart(fig_country, use_container_width=True)
+
+elif secilen_sayfa == "Sepet Analizi":
+    st.title("🛒 Sepet Analizi ve Ürün Birliktelikleri")
+    st.write("Bu analiz, hangi ürünlerin birlikte satılma ihtimalinin en yüksek olduğunu gösterir.")
+
+    # Algoritma dosyasındaki benzerlik matrisini kullanıyoruz
+    from src.recommender import sim_df
+    
+    # En güçlü 10 birlikteliği bulalım
+    st.subheader("🔗 En Güçlü Ürün Eşleşmeleri")
+    
+    # Matrisi düzeltip ikili kombinasyonları çıkarıyoruz
+    pairs = sim_df.unstack().reset_index()
+    pairs.columns = ['Ürün A', 'Ürün B', 'Birliktelik Skoru']
+    
+    # Aynı ürünlerin eşleşmesini (Skor 1.0 olanlar) temizle
+    pairs = pairs[pairs['Ürün A'] != pairs['Ürün B']]
+    
+    # En yüksek skorlu ilk 15 eşleşmeyi al (Tekrarları önlemek için sıralı alabilirsin)
+    top_pairs = pairs.sort_values(by='Birliktelik Skoru', ascending=False).head(15)
+    
+    # Skoru daha okunabilir yap (Türk usulü nokta ile)
+    top_pairs['Birliktelik Skoru'] = top_pairs['Birliktelik Skoru'].apply(lambda x: f"{x:.2f}".replace('.', ','))
+    
+    st.dataframe(top_pairs, use_container_width=True, hide_index=True)
+    
+    st.info("💡 **Aksiyon Önerisi:** Yukarıdaki tabloda birliktelik skoru yüksek olan ürünleri aynı paket (bundle) içinde kampanya ile satarak ciroyu artırabilirsiniz.")
