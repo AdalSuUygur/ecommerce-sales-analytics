@@ -124,3 +124,59 @@ def calculate_rfm(df):
     rfm['Segment'] = rfm['RFM_SCORE'].replace(seg_map, regex=True)
 
     return rfm
+
+
+def calculate_monthly_growth(df):
+    """
+    Aylık ciro büyüme oranlarını (Month-over-Month Growth) hesaplar.
+    Dashboard'da 'Geçen aya göre %X büyüdük' demek için kullanılır.
+    """
+    df_trend = df.set_index('OrderDate')
+    monthly_sales = df_trend['TotalAmount'].resample('ME').sum()
+    
+    # Yüzdelik Değişim (PCT Change)
+    growth_df = pd.DataFrame(monthly_sales)
+    growth_df['Growth_Rate'] = growth_df['TotalAmount'].pct_change() * 100
+    
+    return growth_df
+
+
+def calculate_cohort_matrix(df):
+    """
+    Meşhur Cohort Analizi (Retention Heatmap) için veri hazırlar.
+    Müşterilerin ilk geldiği aydan sonraki aylarda ne kadarının kaldığını gösterir.
+    """
+    # 1. Veriyi kopyalayalım
+    cohort_data = df[['CustomerID', 'OrderDate']].copy()
+    
+    # 2. Sipariş ayını bul (Order Month)
+    cohort_data['OrderMonth'] = cohort_data['OrderDate'].dt.to_period('M')
+    
+    # 3. Müşterinin İLK sipariş tarihini bul (Cohort Month)
+    cohort_data['CohortMonth'] = cohort_data.groupby('CustomerID')['OrderDate'] \
+                                            .transform('min').dt.to_period('M')
+    
+    # 4. Cohort Index (Müşteri kaç aydır bizle?)
+    # Formül: (Sipariş Yılı - Cohort Yılı) * 12 + (Sipariş Ayı - Cohort Ayı) + 1
+    def get_date_int(df, column):
+        year = df[column].dt.year
+        month = df[column].dt.month
+        return year, month
+
+    order_year, order_month = get_date_int(cohort_data, 'OrderMonth')
+    cohort_year, cohort_month = get_date_int(cohort_data, 'CohortMonth')
+
+    years_diff = order_year - cohort_year
+    months_diff = order_month - cohort_month
+
+    cohort_data['CohortIndex'] = years_diff * 12 + months_diff + 1
+    
+    # 5. Pivot Table (Satırlar: Cohort Ayı, Sütunlar: Geçen Ay Sayısı, Değer: Müşteri Sayısı)
+    cohort_counts = cohort_data.groupby(['CohortMonth', 'CohortIndex'])['CustomerID'].nunique().reset_index()
+    cohort_matrix = cohort_counts.pivot(index='CohortMonth', columns='CohortIndex', values='CustomerID')
+    
+    # 6. Retention Oranına Çevirme (İlk aydaki sayıya bölme)
+    cohort_size = cohort_matrix.iloc[:, 0]
+    retention = cohort_matrix.divide(cohort_size, axis=0)
+    
+    return retention
