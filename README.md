@@ -3,6 +3,7 @@
 Bu proje, 72 saatlik Ideathon kapsamında geliştirilmiş veri bilimi tabanlı bir e-ticaret analiz paneli ve ürün öneri sistemidir. Müşterilerin geçmiş alışveriş verilerini analiz ederek **Kosinüs Benzerliği (Cosine Similarity)** algoritmasıyla kişiselleştirilmiş ürün önerileri sunar.
 
 ## 🛠️ Kullanılan Teknolojiler
+
 - **Backend & Makine Öğrenmesi:** Python, Scikit-learn, Pandas
 - **Frontend & Arayüz:** Streamlit
 - **Yaklaşım:** İşbirlikçi Filtreleme (Collaborative Filtering)
@@ -12,6 +13,7 @@ Bu proje, 72 saatlik Ideathon kapsamında geliştirilmiş veri bilimi tabanlı b
 Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları takip edin:
 
 ### 1. Sanal Ortamı Oluşturun ve Aktif Edin
+
 ```bash
 # Sanal ortam oluşturma
 python -m venv venv
@@ -46,8 +48,7 @@ streamlit run dashboard/app.py
 
 Düzenli çalışmak için aşağıdaki klasör yapısına sadık kalıyoruz:
 
-* **`data/`**: Veri setleri burada durur.
-    * `processed/`: Temizlenmiş ve analize hazır veriler.
+* **`data/`**: Veri setleri burada durur. Temizlenmiş ve analize hazır veriler.
 * **`notebooks/`**: Deneme kodları ve analizler (Jupyter Notebook).
 * **`src/`**: Projenin ana mantık kodları (Fonksiyonlar, recommender).
 * **`dashboard/`**: Streamlit/Dash arayüz kodları.
