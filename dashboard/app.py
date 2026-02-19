@@ -311,3 +311,4 @@ elif secilen_sayfa == "Sepet Analizi":
     st.dataframe(top_pairs, use_container_width=True, hide_index=True)
     
     st.info("💡 **Aksiyon Önerisi:** Yukarıdaki tabloda birliktelik skoru yüksek olan ürünleri aynı paket (bundle) içinde kampanya ile satarak ciroyu artırabilirsiniz.")
+    
